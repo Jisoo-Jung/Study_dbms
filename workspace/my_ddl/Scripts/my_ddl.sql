@@ -1,0 +1,2187 @@
+/*항상 범위 주석을 사용한다.*/
+CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE,
+   MEMBER_PASSWORD VARCHAR2(255),
+   MEMBER_AGE NUMBER(3) CONSTRAINT CHECK_AGE CHECK(MEMBER_AGE > 0)
+);
+
+CREATE TABLE TBL_ORDER(
+   ID NUMBER CONSTRAINT PK_ORDER PRIMARY KEY,
+   MEMBER_ID NUMBER,
+   ORDER_DATE DATE DEFAULT CURRENT_TIMESTAMP,
+   ORDER_COUNT NUMBER DEFAULT 1,
+   CONSTRAINT FK_ORDER_MEMBER FOREIGN KEY(MEMBER_ID)
+   REFERENCES TBL_MEMBER(ID)
+);
+
+/*동물원*/
+CREATE TABLE TBL_ZOO(
+   ID NUMBER CONSTRAINT PK_ZOO PRIMARY KEY,
+   ZOO_NAME VARCHAR2(255),
+   ZOO_ADDRESS VARCHAR2(255),
+   ZOO_ADDRESS_DETAIL VARCHAR2(255),
+   ZOO_MAX_ANIMAL NUMBER DEFAULT 0
+);
+
+/*동물*/
+CREATE TABLE TBL_ANIMAL(
+   ID NUMBER CONSTRAINT PK_ANIMAL PRIMARY KEY,
+   ANIMAL_NAME VARCHAR2(255),
+   ANIMAL_TYPE VARCHAR2(255),
+   ANIMAL_AGE NUMBER DEFAULT 0,
+   ANIMAL_HEIGHT NUMBER(3, 5),
+   ANIMAL_WEIGHT NUMBER(3, 5),
+   ZOO_ID NUMBER,
+   CONSTRAINT FK_ANIMAL_ZOO FOREIGN KEY(ZOO_ID)
+   REFERENCES TBL_ZOO(ID)
+);
+
+/* <논리적 설계>
+   회원          주문             상품
+   ----------------------------------------
+   번호PK     	번호PK          	번호PK
+   ----------------------------------------
+   아이디U, NN   	날짜NN			이름NN
+   비밀번호NN     회원번호FK, NN		가격D=0
+   이름NN      	상품번호FK, NN		재고D=0
+   주소NN
+   이메일
+   생일
+*/
+
+/*실습 - 정지수****************************************************/
+ /* 
+ * <물리적 설계>
+ * MEMBER									
+ * -----------------------------------
+ * ID:NUMBER:PRIMARY KEY		
+ * ------------------------------------
+ * MEMBER_ID:UNIQUE:NOT NULL				
+ * MEMBER_PW:VARCHAR2(1000):NOT NULL		
+ * MEMBER_NAME:VARCHAR2(1000):NOT NULL		
+ * MEMBER_ADRESS:VARCHAR2(1000):NOT NULL
+ * MEMBER_EMAIL:VARCHAR2(1000)
+ * MEMBER_BIRTH:DATE
+ * 
+ *
+ * ORDER										
+ * -------------------------------------------
+ * ID:NUMBER:PRIMARY KEY	 	
+ * -------------------------------------------
+ * ORDER_DATE:DATE:NOT NULL						
+ * MEMBER_ID:NUMBER:FOREIGN KEY:NOT NULL	 	
+ * PRUDUCT_ID:NUMBER:FOREIGN KEY:NOT NULL 	
+ * 
+ * 
+ * PRUDUCT
+ * ------------------------------------
+ * ID:NUMBER:PRIMARY KEY
+ * ------------------------------------
+ * PRUDUCT_NAME:VARCHAR2(1000):NOT NULL
+ * PRUDUCT_PRICE:NUMBER:DEFAULT 0
+ * PRODUCT_STOCK:NUMBER:DEFAULT 0
+ * */
+/*****************************************************************/
+
+
+DROP TABLE TBL_ORDER;
+DROP TABLE TBL_MEMBER;
+
+CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+   MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+   MEMBER_NAME VARCHAR2(255) NOT NULL,
+   MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+   MEMBER_EMAIL VARCHAR2(255),
+   MEMBER_BIRTH DATE
+);
+
+CREATE TABLE TBL_PRODUCT(
+   ID NUMBER CONSTRAINT PK_PRODUCT PRIMARY KEY,
+   PRODUCT_NAME VARCHAR2(255) NOT NULL,
+   PRODUCT_PRICE NUMBER DEFAULT 0,
+   PRODUCT_STOCK NUMBER DEFAULT 0
+);
+
+CREATE TABLE TBL_ORDER(
+   ID NUMBER CONSTRAINT PK_ORDER PRIMARY KEY,
+   ORDER_DATE DATE DEFAULT CURRENT_TIMESTAMP,
+   MEMBER_ID NUMBER,
+   PRODUCT_ID NUMBER,
+   CONSTRAINT FK_ORDER_MEMBER FOREIGN KEY(MEMBER_ID)
+   REFERENCES TBL_MEMBER(ID),
+   CONSTRAINT FK_ORDER_PRODUCT FOREIGN KEY(PRODUCT_ID)
+   REFERENCES TBL_PRODUCT(ID)
+);
+
+/*숙제*/
+/*1. 요구사항 분석
+    꽃 테이블과 화분 테이블 2개가 필요하고,
+    꽃을 구매할 때 화분도 같이 구매합니다.
+    꽃은 이름과 색상, 가격이 있고,
+    화분은 제품번호, 색상, 모양이 있습니다.
+    화분은 모든 꽃을 담을 수 없고 정해진 꽃을 담아야 합니다.
+
+2. 개념 모델링
+	꽃			화분
+	상품번호		제품번호								
+	이름			색상
+	색상			모양
+	가격			재고량
+	화분 제품번호
+	재고량
+
+3. 논리 모델링
+	꽃			화분
+	--------------------------------------
+	상품번호PK		제품번호PK	
+	--------------------------------------							
+	이름NN		색상NN
+	색상NN		모양NN
+	가격D0		재고D0
+				재고D0
+				화분제품번호FK,NN
+
+4. 물리 모델링
+ 
+ POT
+ -----------------------------------
+ ID:NUMBER:PRIMARY KEY	
+ ----------------------------------
+ POT_COLOR:VARCHAR2(1000):NOT NULL
+ POT_SHAPE:VARCHAR2(1000):NOT NULL
+ POT_STOCK:NUMBER:DEFAULT 0
+
+ 
+ FLOWER
+ -----------------------------------
+ ID:NUMBER:PRIMARY KEY	
+ ----------------------------------
+ FLOWER_NAME:VARCHAR2(1000):NOT NULL	
+ FLOWER_COLOR:VARCHAR2(1000):NOT NULL	
+ FLOWER_PRICE:NUMBER:DEFAULT 0
+ FLOWER_STOCK:NUMBER:DEFAULT 0
+ POT_ID:NUMBER:FOREIGN KEY:NOT NULL 
+ 
+5. 구현
+**/
+/*구현된 테이블 구조 해석
+ * 
+ * 하나의 꽃은 여러 화분에 담길 수 있으나,
+ * 하나의 화분에는 하나의 꽃만 담을 수 있는
+ * 전형적인 1:N 구조이다.
+ * 
+ * */
+
+CREATE TABLE TBL_FLOWER(
+   ID NUMBER CONSTRAINT PK_FLOWER PRIMARY KEY,
+   NAME VARCHAR2(255) NOT NULL CONSTRAINT UK_FLOWER UNIQUE,
+   COLOR VARCHAR2(255) NOT NULL,
+   PRICE NUMBER DEFAULT 0
+);
+
+CREATE TABLE TBL_FLOWER_POT(
+   ID NUMBER CONSTRAINT PK_FLOWER_POT PRIMARY KEY,
+   COLOR VARCHAR2(255) NOT NULL,
+   SHAPE VARCHAR2(255) NOT NULL,
+   FLOWER_ID NUMBER,
+   CONSTRAINT FK_POT_FLOWER FOREIGN KEY(FLOWER_ID)
+   REFERENCES TBL_FLOWER(ID)
+);
+
+/*복합키(조합키)
+ * 
+ * PK를 설정할 때 컬럼을 2개 이상 설정하는 문법.
+ * 여러 개의 컬럼 조합으로 중복이 없는 경우 하나의 PK처럼 사용할 수 있게 된다.
+ * 
+ * */
+
+/*구현된 테이블 구조 해석
+ * 
+ * 하나의 꽃은 여러 화분에 담길 수 있으나,
+ * 하나의 화분에는 하나의 꽃만 담을 수 있는
+ * 전형적인 1:N 구조이다.
+ * 
+ * */
+DROP TABLE TBL_FLOWER_POT;
+DROP TABLE TBL_FLOWER;
+
+CREATE TABLE TBL_FLOWER(
+   NAME VARCHAR2(255) NOT NULL,
+   COLOR VARCHAR2(255) NOT NULL,
+   PRICE NUMBER DEFAULT 0,
+   CONSTRAINT PK_FLOWER PRIMARY KEY(NAME, COLOR)
+);
+
+CREATE TABLE TBL_FLOWER_POT(
+   ID NUMBER CONSTRAINT PK_FLOWER_POT PRIMARY KEY,
+   COLOR VARCHAR2(255) NOT NULL,
+   SHAPE VARCHAR2(255) NOT NULL,
+   FLOWER_NAME VARCHAR2(255) NOT NULL,
+   FLOWER_COLOR VARCHAR2(255) NOT NULL,
+   CONSTRAINT FK_POT_FLOWER FOREIGN KEY(FLOWER_NAME, FLOWER_COLOR)
+   REFERENCES TBL_FLOWER(NAME, COLOR)
+);
+
+/*슈퍼키, 서브키
+ * 
+ * FK를 PK로 설정한다.
+ * 
+ * */
+
+/*구현된 테이블 구조 해석
+ * 
+ * 하나의 꽃은 하나의 화분에 담길 수 있고,
+ * 하나의 화분에는 하나의 꽃만 담을 수 있는
+ * 전형적인 1:1 구조이다.
+ * 
+ * */
+CREATE TABLE TBL_FLOWER(
+   ID NUMBER CONSTRAINT PK_FLOWER PRIMARY KEY,
+   NAME VARCHAR2(255) NOT NULL CONSTRAINT UK_FLOWER UNIQUE,
+   COLOR VARCHAR2(255) NOT NULL,
+   PRICE NUMBER DEFAULT 0
+);
+
+CREATE TABLE TBL_FLOWER_POT(
+   ID NUMBER CONSTRAINT PK_FLOWER_POT PRIMARY KEY,
+   COLOR VARCHAR2(255) NOT NULL,
+   SHAPE VARCHAR2(255) NOT NULL,
+   CONSTRAINT FK_POT_FLOWER FOREIGN KEY(ID)
+   REFERENCES TBL_FLOWER(ID)
+);
+
+
+
+
+/*
+1. 요구사항 분석
+    안녕하세요, 동물병원을 곧 개원합니다.
+    동물은 보호자랑 항상 같이 옵니다. 가끔 보호소에서 오는 동물도 있습니다.
+    보호자가 여러 마리의 동물을 데리고 올 수 있습니다.
+    보호자는 이름, 나이, 전화번호, 주소가 필요하고
+    동물은 병명, 이름, 나이, 몸무게가 필요합니다.
+
+2. 개념 모델링
+3. 논리 모델링
+4. 물리 모델링
+5. 구현
+*/
+CREATE TABLE TBL_OWNER(
+   ID NUMBER CONSTRAINT PK_OWNER PRIMARY KEY,
+   NAME VARCHAR2(255) NOT NULL,
+   AGE NUMBER,
+   PHONE VARCHAR2(255) NOT NULL
+);
+
+ALTER TABLE TBL_OWNER ADD(ADDRESS VARCHAR2(255));
+ALTER TABLE TBL_OWNER RENAME COLUMN NAME TO OWNER_NAME;
+ALTER TABLE TBL_OWNER RENAME COLUMN AGE TO OWNER_AGE;
+ALTER TABLE TBL_OWNER RENAME COLUMN PHONE TO OWNER_PHONE;
+ALTER TABLE TBL_OWNER RENAME COLUMN ADDRESS TO OWNER_ADDRESS;
+
+CREATE TABLE TBL_PET(
+   ID NUMBER CONSTRAINT PK_PET PRIMARY KEY,
+   PET_ILL_NAME VARCHAR2(255),
+   PET_NAME VARCHAR2(255),
+   PET_AGE NUMBER,
+   WEIGHT NUMBER(4, 2),
+   OWNER_ID NUMBER,
+   CONSTRAINT FK_PET_OWNER FOREIGN KEY(OWNER_ID)
+   REFERENCES TBL_OWNER(ID)
+);
+
+ALTER TABLE TBL_PET RENAME COLUMN WEIGHT TO PET_WEIGHT;
+
+/*
+1. 요구 사항
+    커뮤니티 게시판을 만들고 싶어요.
+    게시판에는 게시글 제목과 게시글 내용, 작성한 시간, 작성자가 있고,
+    게시글에는 댓글이 있어서 댓글 내용들이 나와야 해요.
+    작성자는 회원(tbl_user)정보를 그대로 사용해요.
+    댓글에도 작성자가 필요해요.
+
+2. 개념 모델링
+	회원		게시판		게시글		댓글
+			번호			번호			번호	
+	번호		게시글 제목	제목			댓글(댓글 내용)
+	아이디	게시글 내용	내용			작성자(회원-TBL_USER 정보 그대로 사용)
+	비밀번호	작성한 시간	작성한 시간	게시글 번호
+			작성자		작성자
+						게시판 번호
+			
+		1 : N		1 : N		1 : N
+
+3. 논리 모델링
+	회원			게시판		게시글			댓글
+	-------------------------------------------------------------
+	번호PK		번호PK		번호PK			번호PK	
+	-------------------------------------------------------------
+	아이디UK NN				제목NN			댓글(댓글 내용)NN
+	비밀번호NN					내용NN			작성자(회원-TBL_USER 정보 그대로 사용)FK
+							작성한 시간DATE	게시글 번호FK
+							작성자FK
+							게시판 번호FK
+4. 물리 모델링
+
+ MEMBER
+ -----------------------------------
+ ID:NUMBER:PRIMARY KEY	
+ ----------------------------------
+ MEMBER_ID:VARCHAR2(1000):UNIQUE:NOT NULL
+ MEMBER_PASSWORD:VARCHAR2(1000):NOT NULL
+ 
+ bulletin board
+ -----------------------------------
+ ID:NUMBER:PRIMARY KEY	
+ ----------------------------------
+
+ Bulletin
+ -----------------------------------
+ ID:NUMBER:PRIMARY KEY	
+ ----------------------------------
+ Bulletin_Title:VARCHAR2(1000):NOT NULL
+ Bulletin_content:VARCHAR2(1000):NOT NULL
+ Bulletin_Time:DATE
+ MEMBER_ID:VARCHAR2(1000):FOREIGN KEY:NOT NULL
+ bulletin board_ID:NUMBER:FOREIGN KEY:NOT NULL
+ 
+ Comments
+ -----------------------------------
+ ID:NUMBER:PRIMARY KEY	
+ ----------------------------------
+ Comments_content:VARCHAR2(1000):NOT NULL
+ MEMBER_ID:VARCHAR2(1000):FOREIGN KEY:NOT NULL
+ Bulletin_ID:NUMBER:FOREIGN KEY:NOT NULL
+
+5. 구현
+*/
+
+/*강사님*/
+/*CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+   MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+   MEMBER_NAME VARCHAR2(255) NOT NULL,
+   MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+   MEMBER_EMAIL VARCHAR2(255),
+   MEMBER_BIRTH DATE
+);
+
+CREATE TABLE TBL_POST(
+   ID NUMBER CONSTRAINT PK_POST PRIMARY KEY,
+   POST_TITLE VARCHAR2(255) NOT NULL,
+   POST_CONTENT VARCHAR2(255) NOT NULL,
+   CREATED_DATE DATE DEFAULT CURRENT_TIMESTAMP,
+   MEMBER_ID NUMBER,
+   CONSTRAINTS FK_POST_MEMBER FOREIGN KEY(MEMBER_ID)
+   REFERENCES TBL_MEMBER(ID)
+);
+
+ALTER TABLE TBL_POST MODIFY(MEMBER_ID NULL);
+ALTER TABLE TBL_POST MODIFY(MEMBER_ID NOT NULL);
+
+CREATE TABLE TBL_REPLY(
+   ID NUMBER CONSTRAINT PK_REPLY PRIMARY KEY,
+   REPLY_CONTENT VARCHAR2(255) NOT NULL,
+   POST_ID NUMBER NOT NULL,
+   MEMBER_ID NUMBER NOT NULL,
+   CONSTRAINTS FK_REPLY_POST FOREIGN KEY(POST_ID)
+   REFERENCES TBL_POST(ID),
+   CONSTRAINTS FK_REPLY_MEMBER FOREIGN KEY(MEMBER_ID)
+   REFERENCES TBL_MEMBER(ID)
+);*/
+
+
+/*지수-잘 짠게 아님*/
+/* CREATE TABLE TBL_MEMBER(
+ ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,	
+ MEMBER_ID VARCHAR2(1000) CONSTRAINT UK_MEMBER UNIQUENOT NOT NULL,
+ MEMBER_PASSWORD VARCHAR2(1000) NOT NULL
+ );
+ 
+ CREATE TABLE TBL_BULLETIN_BOARD(
+ ID NUMBER CONSTRAINT PK_BULLETIN_BOARD PRIMARY KEY
+ );
+
+ CREATE TABLE TBL_BULLETIN(
+ ID NUMBER CONSTRAINT PK_BULLETIN PRIMARY KEY,
+ bULLETIN_TITLE VARCHAR2(1000) NOT NULL,
+ bULLETIN_CONTENT VARCHAR2(1000) NOT NULL,
+ bULLETIN_TIME DATE DEFAULT CURRENT_TIMESTAMP,
+ MEMBER_ID VARCHAR2(1000) NOT NULL,
+ BULLETIN_BOARD_ID NUMBER NOT NULL,
+ CONSTRAINT FK_BULLETIN_MEMBER FOREIGN KEY(MEMBER_ID)
+ REFERENCES TBL_MEMBER(ID),
+ CONSTRAINT FK_BULLETIN_BULLETIN_BOARD FOREIGN KEY(BULLETIN_BOARD_ID)
+ REFERENCES TBL_BULLETIN_BOARD(ID)
+ );
+ 
+ CREATE TABLE TBL_COMMENTS(
+ ID:NUMBER:PRIMARY KEY	
+ Comments_content:VARCHAR2(1000):NOT NULL
+ MEMBER_ID:VARCHAR2(1000):FOREIGN KEY:NOT NULL
+ Bulletin_ID:NUMBER:FOREIGN KEY:NOT NULL
+ );*/
+
+/*요구 사항
+    마이페이지에서 회원 프로필을 구현하고 싶습니다.
+    회원당 프로필을 여러 개 설정할 수 있고,
+    대표 이미지로 선택된 프로필만 화면에 보여주고 싶습니다.
+
+2. 개념 모델링
+	회원 		마이페이지
+   번호		번호
+   아이디		프로필 제목
+   비밀번호	프로필 내용
+   이름     	프로필 이미지
+   주소
+   이메일
+   생일		
+   
+   		1 : N
+
+3. 논리 모델링
+	회원 			마이페이지
+----------------------
+   번호PK			번호PK
+----------------------
+   아이디U,NN		프로필 제목NN
+   비밀번호NN		프로필 내용
+   이름NN     	프로필 이미지
+   주소NN			회원 번호FK, NN
+   이메일
+   생일		
+
+4. 물리 모델링
+
+ * MEMBER								
+ * -----------------------------------
+ * ID:NUMBER:PRIMARY KEY		
+ * ------------------------------------
+ * MEMBER_ID:UNIQUE:NOT NULL				
+ * MEMBER_PW:VARCHAR2(1000):NOT NULL		
+ * MEMBER_NAME:VARCHAR2(1000):NOT NULL		
+ * MEMBER_ADRESS:VARCHAR2(1000):NOT NULL
+ * MEMBER_EMAIL:VARCHAR2(1000)
+ * MEMBER_BIRTH:DATE
+ * 
+ * MY_PAGE							
+ * -----------------------------------
+ * ID:NUMBER:PRIMARY KEY		
+ * ------------------------------------
+ * PROPILE_TITLE:VARCHAR2(1000):NOT NULL				
+ * PROPILE_CONTENT:VARCHAR2(1000)	
+ * PROPILE_IMAGE:	
+ * MEMBER_ID:VARCHAR2(1000):NOT NULL:FOREIGN KEY
+
+
+5. 구현
+*/
+/*지수 -> 강사님 얘기듣고 STATUS 테이블 만들어봄. 그러나 강사와 달랐다*/
+/*CREATE TABLE TBL_MEMBER(
+	ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+	MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+	MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+	MEMBER_NAME VARCHAR2(255) NOT NULL,
+	MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+	MEMBER_EMAIL VARCHAR2(255),
+	MEMBER_BIRTH DATE
+);
+  
+ CREATE TABLE TBL_PROFILE(							
+ 	ID NUMBER CONSTRAINT PK_PROPILE PRIMARY KEY,	
+ 	PROFILE_TITLE VARCHAR2(1000) NOT NULL,			
+ 	PROFILE_CONTENT VARCHAR2(1000),	
+ 	PROFILE_IMAGE VARCHAR2(1000),	
+ 	MEMBER_ID NUMBER NOT NULL,
+ 	CONSTRAINT FK_PROPILE_MEMBER FOREIGN KEY(MEMBER_ID)
+ 	REFERENCES TBL_MEMBER(ID)
+ );
+
+CREATE TABLE TBL_STATUS_PROPILE(
+	
+);*/
+
+/*강사 버전*/
+/*CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+   MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+   MEMBER_NAME VARCHAR2(255) NOT NULL,
+   MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+   MEMBER_EMAIL VARCHAR2(255),
+   MEMBER_BIRTH DATE
+);
+
+CREATE TABLE TBL_PROFILE(
+   ID NUMBER CONSTRAINT PK_PROFILE PRIMARY KEY,
+   PROFILE_PATH VARCHAR2(255) NOT NULL,
+   PROFILE_SIZE NUMBER DEFAULT 0,
+   STATUS NUMBER DEFAULT 0,
+   MEMBER_ID NUMBER NOT NULL,
+   CONSTRAINT FK_PROFILE_MEMBER FOREIGN KEY(MEMBER_ID)
+   REFERENCES TBL_MEMBER(ID)
+);*/
+
+/*
+1. 요구 사항
+    회원들끼리 좋아요를 누를 수 있습니다.
+
+2. 개념 모델링
+	회원 		좋아요		알림(슈퍼키)
+	번호		번호			번호
+	아이디	디폴트0(0,1)	좋아요 번호
+	비밀번호	회원번호		회원 아이디
+	이름     
+	주소
+	이메일
+	생일		
+	
+	
+	회원		좋아요
+	회원정보	번호
+			누가F
+			누구를F
+
+3. 논리 모델링
+	회원 			좋아요				알림(슈퍼키)
+	-------------------------------------------
+	번호PK		번호PK,D0				번호PK
+	-------------------------------------------
+	아이디U,NN						좋아요 번호FK,NN
+	비밀번호NN		회원번호FK,NN			회원 아이디FK,NN
+	이름NN     
+	주소NN
+	이메일
+	생일		
+
+		1 : N					1 : 1
+
+
+4. 물리 모델링
+ * MEMBER								
+ * -----------------------------------
+ * ID:NUMBER:PRIMARY KEY		
+ * ------------------------------------
+ * MEMBER_ID:UNIQUE:NOT NULL				
+ * MEMBER_PW:VARCHAR2(1000):NOT NULL		
+ * MEMBER_NAME:VARCHAR2(1000):NOT NULL		
+ * MEMBER_ADRESS:VARCHAR2(1000):NOT NULL
+ * MEMBER_EMAIL:VARCHAR2(1000)
+ * MEMBER_BIRTH:DATE
+ * 
+ * LIKE						
+ * -----------------------------------
+ * ID:NUMBER:PRIMARY KEY:DEFAULT 0	
+ * ------------------------------------
+ * MEMBER_ID:NUMBER:NOT NULL:FOREIGN KEY
+ 
+
+
+5. 구현
+	회원		좋아요
+	회원정보	번호
+			누가F
+			누구를F
+*/
+
+CREATE TABLE TBL_MEMBER(
+	ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+	MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+	MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+	MEMBER_NAME VARCHAR2(255) NOT NULL,
+	MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+	MEMBER_EMAIL VARCHAR2(255),
+	MEMBER_BIRTH DATE
+);	
+
+CREATE TABLE TBL_LIKE(
+	ID NUMBER CONSTRAINT PK_LIKE PRIMARY KEY,
+	MEMBER_ID NUMBER NOT NULL,
+  	CONSTRAINT FK_LIKE_FROM_MEMBER FOREIGN KEY(MEMBER_ID)
+  	REFERENCES TBL_MEMBER(ID),
+   	CONSTRAINT FK_LIKE_TO_MEMBER FOREIGN KEY(MEMBER_ID)
+   	REFERENCES TBL_MEMBER(ID)
+);	
+
+/*
+    1. 요구사항 분석
+        안녕하세요 중고차 딜러입니다.
+        이번에 자동차와 차주를 관리하고자 방문했습니다.
+        자동차는 여러 명의 차주로 히스토리에 남아야 하고,
+        차주는 여러 대의 자동차를 소유할 수 있습니다.
+        그래서 우리는 항상 등록증(Registration)을 작성합니다.
+        자동차는 브랜드, 모델명, 가격, 출시날짜가 필요하고
+        차주는 이름, 전화번호, 주소가 필요합니다.
+        
+        요청자: 중고차 딜러
+        관리하고 하는 것: 자동차, 차주
+        
+
+    2. 개념 모델링
+    차주			자동차		등록증		히스토리
+    번호			번호			번호			번호
+    이름			브랜드		차주 번호		차동차 번호(자동차는 여러 명의 차주로..히스토리에 남아야 하고)
+    전화번호		모델명		자동차 번호
+    주소			가격
+    			출시날짜
+    
+    		1 : N
+    
+    3. 논리 모델링
+    차주			자동차		등록증			
+   --------------------------------------
+    번호p			번호p			번호p				
+   --------------------------------------
+    이름NN		브랜드U,NN	차주 번호F,NN		
+    전화번호NN		모델명NN		자동차 번호F,NN
+    주소NN		가격D0,NN
+    			출시날짜DATE,NN
+    			차주 번호F,NN
+    
+    4. 물리 모델링
+    CAR_OWNER
+    ----------------------------
+    ID:NUMBER:PRIMARY KEY	
+    ----------------------------
+    CAR_OWNER_NAME:VARCHAR2(1000):NOT NULL
+    CAR_OWNER_PHONE:VARCHAR2(1000):NOT NULL
+    CAR_OWNER_ADRESS:VARCHAR2(1000):NOT NULL
+    
+    CAR
+    ----------------------------
+    ID:NUMBER:PRIMARY KEY	
+    ----------------------------
+    CAR_BRAND:VARCHAR2(1000):UNIQUE:NOT NULL
+    CAR_MODEL:VARCHAR2(1000):NOT NULL
+    CAR_PRICE:NUMBER:DEFAULT 0:NOT NULL
+    CAR_RELEASE_DATE:DATE:NOT NULL
+    CAR_OWNER_ID:NUMBER:NOT NULL:FOREIGN KEY
+    
+    REGISTRATION
+    ----------------------------
+    ID:NUMBER:PRIMARY KEY	
+    ----------------------------
+    CAR_OWNER_ID:NUMBER:NOT NULL:FOREIGN KEY
+    CAR_ID:NUMBER:NOT NULL:FOREIGN KEY
+    
+    CAR_HISTORY
+    ----------------------------
+    ID:NUMBER:PRIMARY KEY	
+    ----------------------------
+    CAR_ID:NUMBER:NOT NULL:FOREIGN KEY
+    
+    5. 구현
+*/
+CREATE TABLE TBL_CAR_OWNER(
+    ID NUMBER CONSTRAINT PK_CAR_OWNER PRIMARY KEY,	
+    CAR_OWNER_NAME VARCHAR2(1000) NOT NULL,
+    CAR_OWNER_PHONE VARCHAR2(1000) NOT NULL,
+    CAR_OWNER_ADRESS VARCHAR2(1000) NOT NULL
+);
+
+CREATE TABLE TBL_CAR(
+    ID NUMBER CONSTRAINT PK_CAR PRIMARY KEY,
+    CAR_BRAND VARCHAR2(1000) CONSTRAINT UK_CAR UNIQUE NOT NULL,
+    CAR_MODEL VARCHAR2(1000) NOT NULL,
+    CAR_PRICE NUMBER DEFAULT 0,
+    CAR_RELEASE_DATE DATE,
+    CAR_OWNER_ID NUMBER NOT NULL,
+    CONSTRAINT FK_CAR_CAR_OWNER FOREIGN KEY(CAR_OWNER_ID)
+	REFERENCES TBL_CAR_OWNER(ID)
+);
+    
+CREATE TABLE TBL_REGISTRATION(
+    ID NUMBER CONSTRAINT PK_REGISTRATION PRIMARY KEY,
+    CAR_OWNER_ID NUMBER NOT NULL, 
+    CONSTRAINT FK_REGISTRATION_CAR_OWNER FOREIGN KEY(CAR_OWNER_ID)
+	REFERENCES TBL_CAR_OWNER(ID),
+    CONSTRAINT FK_REGISTRATION_CAR FOREIGN KEY(ID)
+  	REFERENCES TBL_CAR(ID)
+);
+
+/*강사 버전*/
+/*CREATE TABLE TBL_CAR(
+   ID NUMBER CONSTRAINT PK_CAR PRIMARY KEY,
+   CAR_BRAND VARCHAR2(255) NOT NULL,
+   CAR_NAME VARCHAR2(255) NOT NULL,
+   CAR_PRICE NUMBER DEFAULT 0,
+   CAR_RELEASE_DATE DATE
+);
+
+CREATE TABLE TBL_OWNER(
+   ID NUMBER CONSTRAINT PK_OWNER PRIMARY KEY,
+   OWNER_ID VARCHAR2(255) CONSTRAINT UK_OWNER UNIQUE NOT NULL,
+   OWNER_PASSWORD VARCHAR2(255) NOT NULL,
+   OWNER_NAME VARCHAR2(255) NOT NULL,
+   OWNER_ADDRESS VARCHAR2(255) NOT NULL,
+   OWNER_EMAIL VARCHAR2(255),
+   OWNER_BIRTH DATE
+);
+
+CREATE TABLE TBL_REGISTRATION(
+   ID NUMBER CONSTRAINT PK_REGISTRATION PRIMARY KEY,
+   OWNER_ID NUMBER,
+   CAR_ID NUMBER,
+   CONSTRAINT FK_REGISTRATION_OWNER FOREIGN KEY(OWNER_ID)
+   REFERENCES TBL_OWNER(ID),
+   CONSTRAINT FK_REGISTRATION_CAR FOREIGN KEY(CAR_ID)
+   REFERENCES TBL_CAR(ID)
+);*/
+
+/*
+    요구사항
+
+    학사 관리 시스템에 학생과 교수, 과목을 관리합니다.
+    학생은 학번, 이름, 전공, 학년이 필요하고
+    교수는 교수 번호, 이름, 전공, 직위가 필요합니다.
+    과목은 고유한 과목 번호와 과목명, 학점이 필요합니다.
+    학생은 여러 과목을 수강할 수 있으며,
+    교수는 여러 과목을 강의할 수 있습니다.
+    학생이 수강한 과목은 성적(점수)이 모두 기록됩니다.
+*/
+
+/*
+ 학생		교수		과목		수강	/번호		강의	/번호		성적	
+ 학번		번호		번호		학생 학번		교수 번호		수강 번호	
+ 이름		이름		과목명	과목 번호		과목 번호		
+ 전공		전공		학점
+ 학년		직위
+ 
+ 학생:과목
+ 1	: N
+ 
+ 교수:과목
+ 1	: N
+ 
+ 학생		교수		과목		강의			성적	
+ -----------------------------------------------------------------
+ 학번P	번호P		번호P		번호P			번호P
+ -----------------------------------------------------------------
+ 이름NN	이름NN	과목명NN	교수 번호F,NN	학생 번호F,NN
+ 전공	NN	전공NN	학점D0	과목 번호F,NN	과목 번호F,NN
+ 학년NN	직위NN
+  
+   
+ STUDENT
+ -----------------------
+ ID:NUMBER:PRIMARY KEY	
+ -----------------------
+ STUDENT_NAME:VARCHAR2(1000):NOT NULL
+ STUDENT_MAJOR:VARCHAR2(100):NOT NULL
+ STUDENT_GRADE:VARCHAR2(4):NOT NULL
+ 
+ 
+ PROFESSOR
+ -----------------------
+ ID:NUMBER:PRIMARY KEY	
+ -----------------------
+ PROFESSOR_NAME:VARCHAR2(150):NOT NULL
+ STUDENT_MAJOR:VARCHAR2(100):NOT NULL
+ STUDENT_POSITION:VARCHAR2(4):NOT NULL
+ 
+ 
+ SUBJECT
+ -----------------------
+ ID:NUMBER:PRIMARY KEY	
+ -----------------------
+ SUBJECT_NAME:VARCHAR2(150):NOT NULL
+ CREDIT:VARCHAR2(4):NOT NULL
+ 
+ LECTURE
+ -----------------------
+ ID:NUMBER:PRIMARY KEY	
+ -----------------------
+ PROFESSOR_ID:NUMBER:NOT NULL:FOREIGN KEY
+ SUBJECT_ID:NUMBER:NOT NULL:FOREIGN KEY
+ 
+ 
+ CASTLE
+ -----------------------
+ ID:NUMBER:PRIMARY KEY	
+ ------------------------
+ STUDENT_ID:NUMBER:NOT NULL:FOREIGN KEY
+ SUBJECT_ID:NUMBER:NOT NULL:FOREIGN KEY
+     
+       
+ */
+
+ CREATE TABLE TBL_STUDENT(
+ 	ID NUMBER CONSTRAINT PK_STUDENT PRIMARY KEY,	
+ 	STUDENT_NAME VARCHAR2(1000) NOT NULL,
+ 	STUDENT_MAJOR VARCHAR2(100) NOT NULL,
+ 	STUDENT_GRADE VARCHAR2(4) NOT NULL
+ );
+ /*지금은 기획이 없어서 마음대로 해도 된다. NUMBER DEFAULT 1*/
+ 
+ CREATE TABLE TBL_PROFESSOR(
+ 	ID NUMBER CONSTRAINT PK_PROFESSOR PRIMARY KEY,	
+ 	PROFESSOR_NAME VARCHAR2(150) NOT NULL,
+ 	STUDENT_MAJOR VARCHAR2(100) NOT NULL,
+ 	STUDENT_POSITION VARCHAR2(5) NOT NULL
+);
+/*직위가 없을 수도 있다. NOT NULL 빼기*/
+ 
+ 
+ CREATE TABLE TBL_SUBJECT(
+ 	ID NUMBER CONSTRAINT PK_SUBJECT PRIMARY KEY,	
+ 	SUBJECT_NAME VARCHAR2(150) NOT NULL,
+ 	CREDIT NUMBER DEFAULT 0
+ );
+/*과목명 중복 없어서 UNIQUE*/
+/*과목별로 학점이 있다는 듯. 이거 들으면 3학점, 이거 들으면 2학점*/
+/*학점인데, 왜 (3, 2)이지?*/
+ 
+ CREATE TABLE TBL_LECTURE(
+	ID NUMBER CONSTRAINT PK_LECTURE PRIMARY KEY,	
+ 	PROFESSOR_ID NUMBER NOT NULL, 
+ 	SUBJECT_ID NUMBER NOT NULL,
+ 	CONSTRAINT FK_LECTURE_PROFESSOR FOREIGN KEY(PROFESSOR_ID)
+ 	REFERENCES TBL_PROFESSOR(ID),
+ 	CONSTRAINT FK_LECTURE_SUBJECT FOREIGN KEY(SUBJECT_ID)
+ 	REFERENCES TBL_SUBJECT(ID)
+ );
+/*그 강의에 교수가 안 올수도 있으니깐?*/
+
+
+
+/*학점과 성적(점수)는 다를 것 같은데. 다르지 않나?*/
+/*열린 과목, 아직 열리지 않은 과목을 추가하심. */
+
+/*
+1. 요구사항
+    대카테고리, 소카테고리가 필요해요.
+    
+    
+2. 개념 모델링
+	대카테고리		소카테고리		
+	번호			번호
+	이름			이름
+				
+		1	:	N
+		
+3. 논리 모델링
+	대카테고리		소카테고리		
+	---------------------
+	번호			번호
+	---------------------
+	이름			이름
+				
+		1	:	N
+
+4. 물리 모델링
+ 
+ 	BIG_CATEGORY
+ 	-----------------------
+ 	ID:NUMBER:PRIMARY KEY	
+ 	-----------------------
+ 	BIG_CATEGORY_NAME:VARCHAR2(10):NOT NULL
+ 	
+ 	SMALL_CATEGORY
+ 	-----------------------
+ 	ID:NUMBER:PRIMARY KEY	
+ 	-----------------------
+ 	SMALL_CATEGORY_NAME:VARCHAR2(5):NOT NULL
+	
+
+5. 구현
+*/
+
+/*대가*/
+CREATE TABLE TBL_BIG_CATEGORY(
+ 	ID NUMBER CONSTRAINT PK_BIG_CATEGORY PRIMARY KEY,
+	BIG_CATEGORY_NAME VARCHAR2(10) NOT NULL
+);
+ 
+/*소카*/
+CREATE TABLE TBL_SMALL_CATEGORY(
+ 	ID NUMBER CONSTRAINT PK_SMALL_CATEGORY PRIMARY KEY,	
+ 	SMALL_CATEGORY_NAME VARCHAR2(5) NOT NULL,
+ 	BIG_CATEGORY_ID NUMBER NOT NULL,
+ 	CONSTRAINT FK_SMALL_CATEGORY_BIG_CATEGORY FOREIGN KEY(BIG_CATEGORY_ID)
+ 	REFERENCES TBL_BIG_CATEGORY(ID)
+);
+
+/*BIG_CATEGORY_ID NUMBER 뒤에 왜 NOT NULL을 안 붙일까?*/
+
+/*
+ * 요구 사항
+ * 
+ * 회의실 예약 서비스를 제작하고 싶습니다.
+ * 회원별로 등급이 존재하고 사무실마다 회의실이 여러 개 있습니다.
+ * 회의실 이용 가능 시간은 파트 타임으로서 여러 시간대가 존재합니다.
+ * 
+ * */
+
+/*
+회의실 예약 서비스
+
+회원			회원등급			사무실		회의실		이용 가능 시간		회의실 예약
+번호			번호				번호			번호			번호				번호		
+회원정보		등급이름						사무실 번호		파트 타임			예약 날짜
+회원등급번호															회원 정보
+																	회의실 정보
+																	이용 가능 시간 정보							
+	N : 1						1 : N					
+
+//1
+회원			사무실		회의실		이용 가능 시간		회의실 예약
+번호			번호			번호			번호				번호		
+회원정보					사무실 번호	파트 타임			예약 날짜
+회원등급												회원 정보
+													회의실 정보
+													이용 가능 시간 정보	
+
+//2				
+회원			회원등급			사무실		회의실		
+-----------------------------------------------------
+번호P			번호P				번호P			번호P					
+-----------------------------------------------------
+회원정보		등급이름U,D1					사무실 번호F		
+회원등급번호F															
+																	
+					
+예약 날짜			예약 시간대			회의실 예약
+--------------------------------------------------
+번호				번호				번호P	
+--------------------------------------------------																	
+날짜				이용 가능 시간		예약 시간대 번호F
+				예약 날짜 번호		회원 정보F
+								회의실 정보F
+		1	: 	N																																																					
+																																																					이용 가능 시간 정보F		
+MEMBER_GRADE
+-------------------------------
+ID:NUMBER:PRIMARY KEY	
+-------------------------------
+MEMBER_GRADE_NAME:VARCHAR2(5):UNIQUE:DEFAULT 1	
+
+
+MEMBER									
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+MEMBER_ID:UNIQUE:NOT NULL				
+MEMBER_PW:VARCHAR2(1000):NOT NULL		
+MEMBER_NAME:VARCHAR2(1000):NOT NULL		
+MEMBER_ADRESS:VARCHAR2(1000):NOT NULL
+MEMBER_EMAIL:VARCHAR2(1000)
+MEMBER_BIRTH:DATE	
+MEMBER_GRADE_ID:NUMBER:FOREIGN KEY
+
+
+OFFICE
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+
+
+CONFERENCE_ROOM
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+OFFICE_ID:NUMBER:FOREIGN KEY
+
+
+RESERVATION_DATE
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+RESERVATION_DATE:DATE 
+
+
+RESERVATION_TIME
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+RESERVATION_TIME:DATE 
+RESERVATION_DATE_ID:NUMBER:FOREIGN KEY
+
+ROOM_RESERVATION
+----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+RESERVATION_TIME_ID:NUMBER:FOREIGN KEY
+MEMBER_ID:NUMBER:FOREIGN KEY
+CONFERENCE_ROOM_ID:NUMBER:FOREIGN KEY
+																				
+*/
+
+
+/*CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+   MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+   MEMBER_NAME VARCHAR2(255) NOT NULL,
+   MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+   MEMBER_EMAIL VARCHAR2(255),
+   MEMBER_BIRTH DATE
+);
+
+CREATE TABLE TBL_OFFICE(
+   ID NUMBER CONSTRAINT PK_OFFICE PRIMARY KEY,
+   OFFICE_NAME VARCHAR2(255) NOT NULL,
+   OFFICE_LOCATION VARCHAR2(255) NOT NULL
+);
+
+CREATE TABLE TBL_CONFERENCE_ROOM(
+   ID NUMBER CONSTRAINT PK_CONFERENCE_ROOM PRIMARY KEY,
+   OFFICE_ID NUMBER NOT NULL,
+   CONSTRAINT FK_CONFERENCE_ROOM_OFFICE FOREIGN KEY(OFFICE_ID)
+   REFERENCES TBL_OFFICE(ID)
+);
+
+CREATE TABLE TBL_PART_TIME(
+   ID NUMBER CONSTRAINT PK_PART_TIME PRIMARY KEY,
+   START_TIME DATE NOT NULL,
+   END_TIME DATE NOT NULL
+   CONFERENCE_ROOM_ID NUMBER,
+   CONSTRAINT FK_PART_TIME_CONFERENCE_ROOM FOREIGN KEY(CONFERENCE_ROOM_ID)
+   REFERENCES TBL_CONFERENCE_ROOM(ID)
+);
+
+CREATE TABLE TBL_RESERVATION(
+   ID NUMBER CONSTRAINT PK_RESERVATION PRIMARY KEY,
+   MEMBER_ID NUMBER NOT NULL,
+   PART_TIME_ID NUMBER NOT NULL,
+   CONSTRAINT FK_RESERVATION_MEMBER FOREIGN KEY(MEMBER_ID)
+   REFERENCES TBL_MEMBER_ID(ID),
+   CONSTRAINT FK_RESERVATION_PART_TIME FOREIGN KEY(PART_TIME_ID)
+   REFERENCES TBL_PART_TIME(ID)
+);*/
+
+
+
+CREATE TABLE TBL_MEMBER(		
+	ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,	
+	MEMBER_ID VARCHAR2(1000) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,			
+	MEMBER_PW VARCHAR2(1000) NOT NULL,		
+	MEMBER_NAME VARCHAR2(1000) NOT NULL,		
+	MEMBER_ADRESS VARCHAR2(1000) NOT NULL,
+	MEMBER_EMAIL VARCHAR2(1000),
+	MEMBER_BIRTH DATE,	
+	MEMBER_GRADE_NAME VARCHAR2(500) DEFAULT 1 CONSTRAINT UK_MEMBER_GRADE UNIQUE
+);
+
+CREATE TABLE TBL_OFFICE(
+	ID NUMBER CONSTRAINT PK_OFFICE PRIMARY KEY
+);
+
+
+CREATE TABLE TBL_CONFERENCE_ROOM(
+	ID NUMBER CONSTRAINT PK_CONFERENCE_ROOM PRIMARY KEY,
+	OFFICE_ID NUMBER,
+	CONSTRAINT FK_CONFERENCE_ROOMGRADE_OFFICE FOREIGN KEY(OFFICE_ID)
+	REFERENCES TBL_OFFICE(ID)
+);
+
+
+CREATE TABLE TBL_RESERVATION_DATE(
+	ID NUMBER CONSTRAINT PK_CRESERVATION_DATE PRIMARY KEY,		
+	RESERVATION_DATE DATE 
+);
+
+
+CREATE TABLE TBL_RESERVATION_TIME(
+	ID NUMBER CONSTRAINT PK_RESERVATION_TIME PRIMARY KEY,	
+	RESERVATION_TIME DATE, 
+	RESERVATION_DATE_ID NUMBER,
+	CONSTRAINT FK_TIME_DATE FOREIGN KEY(RESERVATION_DATE_ID)
+	REFERENCES TBL_RESERVATION_DATE(ID)
+);
+
+
+CREATE TABLE TBL_ROOM_RESERVATION(
+	ID NUMBER CONSTRAINT PK_ROOM_RESERVATION PRIMARY KEY,
+	RESERVATION_TIME_ID NUMBER,
+	MEMBER_ID NUMBER,
+	CONFERENCE_ROOM_ID NUMBER,
+	CONSTRAINT FK_RESERVATION_TIME FOREIGN KEY(RESERVATION_TIME_ID)
+	REFERENCES TBL_RESERVATION_TIME(ID),
+	CONSTRAINT FK_RESERVATION_MEMBER FOREIGN KEY(MEMBER_ID)
+	REFERENCES TBL_MEMBER(ID),
+	CONSTRAINT FK_RESERVATION_ROOM FOREIGN KEY(CONFERENCE_ROOM_ID)
+	REFERENCES TBL_CONFERENCE_ROOM(ID)
+);
+
+
+/*지수 1번째*/
+/*DROP TABLE TBL_MEMBER;
+DROP TABLE TBL_LIKE;
+
+CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+   MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+   MEMBER_NAME VARCHAR2(255) NOT NULL,
+   MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+   MEMBER_EMAIL VARCHAR2(255),
+   MEMBER_BIRTH DATE
+);
+
+ALTER TABLE TBL_MEMBER ADD (MEMBER_GRADE NUMBER DEFAULT 1);
+
+CREATE TABLE TBL_OFFICE(
+	ID NUMBER CONSTRAINT PK_OFFICE PRIMARY KEY
+);
+
+CREATE TABLE TBL_CONFERENCE_ROOM(
+	ID NUMBER CONSTRAINT PK_CONFERENCE_ROOM PRIMARY KEY,
+	OFFICE_ID NUMBER,
+   	CONSTRAINT FK_CONFERENCE_ROOM_OFFICE FOREIGN KEY(OFFICE_ID)
+  	REFERENCES TBL_OFFICE(ID)
+);
+
+CREATE TABLE TBL_AVAILABLE_TIME(
+	ID NUMBER CONSTRAINT PK_AVAILABLE_TIME PRIMARY KEY,
+	CONFERENCE_ROOM_ID NUMBER,
+	MEMBER_ID NUMBER, 
+	CONSTRAINT FK_TIME_CONFERENCE_ROOM FOREIGN KEY(CONFERENCE_ROOM_ID)
+   	REFERENCES TBL_CONFERENCE_ROOM(ID),
+   	CONSTRAINT FK_AVAILABLE_TIME_MEMBER FOREIGN KEY(MEMBER_ID)
+   	REFERENCES TBL_MEMBER(ID)
+);*/
+
+/*요구사항 3개씩 제작 및 해결(본인이 만들어서 본인이 해결)*/
+
+/*
+1. 요구사항 분석
+        안녕하세요 돌박물관 관리자입니다.
+        이번에 돌박물관 내 각종 작품들을 관리하고자 방문했습니다.
+        작은 돌은 실내 박물관(구역 나눠져 있음)에 있고, 큰 바위는 실외 박물관(구역 나눠져 있음)에 있습니다.
+        돌마다 명칭, 종류, 구매시기, 출신 지역, 특징이 있습니다. 
+
+2. 개념 모델링
+		실내 구역	 	돌			실외 구역	 	바위			
+		번호			명칭			번호			명칭			
+		구역 명칭		종류			구역 명칭		종류
+					구매시기					구매시기
+					출신지역					출신지역
+					특징						특징
+					실내 구역 번호				실외 구역 번호
+
+3. 논리 모델링
+		실내 구역	 	돌			실외 구역	 	바위				전체 돌
+		------------------------------------------------------------
+		번호P			번호P			번호P			번호P				번호P
+		------------------------------------------------------------
+		구역 명칭NN	명칭U,NN		구역 명칭NN	명칭U,NN			돌 번호F, NN
+					종류U,NN					종류U,NN			바위 번호F, NN
+					구매날짜DATE				구매날짜DATE
+					출신지역NN					출신지역NN
+					특징NN					특징NN
+					실내 구역 번호F,NN			실외 구역 번호F,NN
+
+4. 물리 모델링
+
+INDOOR_AREA
+-------------------------------
+ID:NUMBER:PRIMARY KEY	
+-------------------------------
+INDOOR_AREA_NAME:VARCHAR2(1000):UNIQUE:NOT NULL
+
+//NOT NULL과 DEFAUL의 차이: 값이 없으면 안된다 / int = 1 같은 느낌으로 값 지정
+
+STONE									
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+STONE_NAME:VARCHAR2(1000):UNIQUE:NOT NULL	
+STONE_KIND:VARCHAR2(1000):UNIQUE:NOT NULL	
+PURCHASE_DATE:DATE	
+STONE_ORIGIN:VARCHAR2(1000):NOT NULL
+STONE_CHAR:ARCHAR2(1000):NOT NULL	
+INDOOR_AREA_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+OUTDOOR_AREA
+-------------------------------
+ID:NUMBER:PRIMARY KEY	
+-------------------------------
+OUTDOOR_AREA_NAME:VARCHAR2(1000):UNIQUE:NOT NULL
+
+
+ROCK								
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+ROCK_NAME:VARCHAR2(1000):UNIQUE:NOT NULL	
+ROCK_KIND:VARCHAR2(1000):UNIQUE:NOT NULL	
+PURCHASE_DATE:DATE	
+ROCK_ORIGIN:VARCHAR2(1000):NOT NULL
+ROCK_CHAR:ARCHAR2(1000):NOT NULL	
+OUTDOOR_AREA_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+5. 구현 
+*/
+
+CREATE TABLE TBL_INDOOR_AREA(
+	ID NUMBER CONSTRAINT PK_INDOOR_AREA PRIMARY KEY,
+	INDOOR_AREA_NAME VARCHAR2(1000) CONSTRAINT UK_INDOOR_AREA UNIQUE NOT NULL
+);
+
+
+CREATE TABLE TBL_STONE(				
+	ID NUMBER CONSTRAINT PK_STONE PRIMARY KEY,		
+	STONE_NAME VARCHAR2(1000) CONSTRAINT UK_STONE UNIQUE NOT NULL,
+	STONE_KIND VARCHAR2(1000) CONSTRAINT UK_STONE_KIND UNIQUE NOT NULL,
+	PURCHASE_DATE DATE,	
+	STONE_ORIGIN VARCHAR2(1000) NOT NULL,
+	STONE_CHAR VARCHAR2(1000) NOT NULL,	
+	INDOOR_AREA_ID NUMBER, 
+	CONSTRAINT FK_STONE_INDOOR_AREA FOREIGN KEY(INDOOR_AREA_ID)
+   	REFERENCES TBL_INDOOR_AREA(ID)
+);
+
+
+CREATE TABLE TBL_OUTDOOR_AREA(
+	ID NUMBER CONSTRAINT PK_OUTDOOR_AREA PRIMARY KEY,
+	OUTDOOR_AREA_NAME VARCHAR2(1000) CONSTRAINT UK_OUTDOOR_AREA UNIQUE NOT NULL
+);
+
+
+CREATE TABLE TBL_ROCK(				
+	ID NUMBER CONSTRAINT PK_ROCK PRIMARY KEY,		
+	ROCK_NAME VARCHAR2(1000) CONSTRAINT UK_ROCK UNIQUE NOT NULL,
+	ROCK_KIND VARCHAR2(1000) CONSTRAINT UK_ROCK_KIND UNIQUE NOT NULL,
+	PURCHASE_DATE DATE,	
+	ROCK_ORIGIN VARCHAR2(1000) NOT NULL,
+	ROCK_CHAR VARCHAR2(1000) NOT NULL,	
+	OUTDOOR_AREA_ID NUMBER, 
+	CONSTRAINT FK_ROCK_OUTDOOR_AREA FOREIGN KEY(OUTDOOR_AREA_ID)
+   	REFERENCES TBL_OUTDOOR_AREA(ID)
+);
+
+
+CREATE TABLE TBL_ALL_STONE(
+	ID NUMBER CONSTRAINT PK_ALL_STONE PRIMARY KEY,
+	CONSTRAINT FK_ALL_STONE_STONE FOREIGN KEY(ID)
+   	REFERENCES TBL_STONE(ID),
+   	CONSTRAINT FK_ALL_STONE_ROCK FOREIGN KEY(ID)
+   	REFERENCES TBL_ROCK(ID)
+);
+
+
+
+/*
+1. 요구사항 분석
+		문화센터 예약 시스템을 만들려고 합니다.
+		회원, 강좌, 강사를 관리하려고 합니다. 
+		시간대별로 강좌가 나눠져 있습니다. 강사 종류에 따라 강사가 1명 또는 2명 이상입니다.
+
+2. 개념 모델링
+		회원		강사		강좌		예약
+		회원정보	강사정보	강좌정보	회원정보
+								강사정보
+								강좌정보
+
+3. 논리 모델링
+		회원		강사		강좌		예약
+		회원정보	강사정보	강좌정보	회원정보
+								강사정보
+								강좌정보
+
+
+4. 물리 모델링
+
+MEMBER									
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+MEMBER_ID:UNIQUE:NOT NULL				
+MEMBER_PW:VARCHAR2(1000):NOT NULL		
+MEMBER_NAME:VARCHAR2(1000):NOT NULL		
+MEMBER_ADRESS:VARCHAR2(1000):NOT NULL
+MEMBER_EMAIL:VARCHAR2(1000)
+MEMBER_BIRTH:DATE	
+
+INSTRUCTOR								
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+INSTRUCTOR_NAME:VARCHAR2(1000):NOT NULL		
+INSTRUCTOR_CAREER:VARCHAR2(1000): NOT NULL
+
+LECTURE							
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+LECTURE_KIND:VARCHAR2(1000):NOT NULL		
+LECTURE_ROOM:VARCHAR2(1000): NOT NULL
+LECTURE_TIME:DATE
+
+
+RESERVATION							
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+MEMBER_ID:NUMBER:NOT NULL:FOREIGN KEY
+INSTRUCTOR_ID:NUMBER:NOT NULL:FOREIGN KEY
+LECTURE_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+	
+5. 구현 
+ */
+
+
+CREATE TABLE TBL_MEMBERS(
+   ID NUMBER CONSTRAINT PK_MEMBERS PRIMARY KEY,
+   MEMBERS_ID VARCHAR2(1000) CONSTRAINT UK_MEMBES UNIQUE NOT NULL,
+   MEMBERS_PASSWORD VARCHAR2(1000) NOT NULL,
+   MEMBERS_NAME VARCHAR2(1000) NOT NULL,
+   MEMBERS_ADDRESS VARCHAR2(1000) NOT NULL,
+   MEMBERS_EMAIL VARCHAR2(1000),
+   MEMBERS_BIRTH DATE
+);
+
+CREATE TABLE TBL_INSTRUCTOR(
+   ID NUMBER CONSTRAINT PK_INSTRUCTOR PRIMARY KEY,		
+	INSTRUCTOR_NAME VARCHAR2(1000) NOT NULL,	
+	INSTRUCTOR_CAREER VARCHAR2(1000) NOT NULL
+);
+
+CREATE TABLE TBL_LECTURES(		
+	ID NUMBER CONSTRAINT PK_LECTURES PRIMARY KEY,		
+	LECTURES_KIND VARCHAR2(1000) NOT NULL,		
+	LECTURES_ROOM VARCHAR2(1000) NOT NULL,
+	LECTURES_TIME DATE
+);
+
+
+CREATE TABLE TBL_RESERVATION(		
+	ID NUMBER CONSTRAINT PK_RESERVATION PRIMARY KEY,	
+	MEMBERS_ID NUMBER NOT NULL,
+	INSTRUCTOR_ID NUMBER NOT NULL,
+	LECTURES_ID NUMBER NOT NULL,
+	CONSTRAINT FK_RESERVATION_MEMBERS FOREIGN KEY(MEMBERS_ID)
+   	REFERENCES TBL_MEMBERS(ID),
+   	CONSTRAINT FK_RESERVATION_INSTRUCTOR FOREIGN KEY(INSTRUCTOR_ID)
+   	REFERENCES TBL_INSTRUCTOR(ID),
+   	CONSTRAINT FK_RESERVATION_LECTURES FOREIGN KEY(LECTURES_ID)
+   	REFERENCES TBL_LECTURES(ID)
+);
+
+
+/*
+1. 요구사항 분석
+		대형 농장을 운영하고 있는 농부입니다.
+		작물과 직원 관리를 하고 싶습니다.
+		작물 작물번호 종류 심어야 하는 날짜 
+		직원 직원번호 이름 나이 경력 업무가 필요합니다.
+
+2. 개념 모델링
+		작물				직원			농장
+		작물번호			직원번호		농장 구역 번호
+		종류				이름			
+		심어야 하는 날짜	나이
+		수확해야 할 날짜	경력
+		농장번호			업무
+						농장번호
+		
+3. 논리 모델링
+		작물					직원			농장
+		----------------------------------------
+		작물번호P				직원번호P		농장 구역 번호P
+		----------------------------------------
+		종류U,NN				이름NN			
+		심어야 하는 날짜DATE,NN	나이
+		수확해야 할 날짜DATE,NN	경력
+		농장번호F,NN				업무NN
+							농장번호F,NN
+
+
+4. 물리 모델링
+
+FARM						
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+
+CROP								
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+CROP_KIND:UNIQUE:NOT NULL				
+PLANTATION:DATE:NOT NULL		
+HARVEST:DATE:NOT NULL
+FARM_ID:NUMBER:NOT NULL:FOREIGN KEY		
+
+
+STAFF								
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+STAFF_NAME:VARCHAR2(1000):NOT NULL		
+STAFF_NAME:NUMBER	
+STAFF_CAREER:VARCHAR2(1000)
+STAFF_WORK:VARCHAR2(1000):NOT NULL
+FARM_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+5. 구현 
+ */
+
+CREATE TABLE TBL_FARM(		
+	ID NUMBER CONSTRAINT PK_FARM PRIMARY KEY
+);
+
+CREATE TABLE TBL_CROP(		
+	ID NUMBER CONSTRAINT PK_CROP PRIMARY KEY,	
+	CROP_KIND VARCHAR2(1000) CONSTRAINT UK_CROP UNIQUE NOT NULL,			
+	PLANTATION_DATE DATE NOT NULL,		
+	HARVEST_DATE DATE NOT NULL,
+	FARM_ID NUMBER NOT NULL,
+	CONSTRAINT FK_ORDER_MEMBER FOREIGN KEY(MEMBER_ID)
+  	REFERENCES TBL_MEMBER(ID)
+);
+
+
+CREATE TABLE TBL_STAFF(		
+	ID NUMBER CONSTRAINT PK_STAFF PRIMARY KEY,			
+	STAFF_NAME:VARCHAR2(1000):NOT NULL		
+	STAFF_NAME:NUMBER	
+	STAFF_CAREER:VARCHAR2(1000)
+	STAFF_WORK:VARCHAR2(1000):NOT NULL
+	FARM_ID:NUMBER:NOT NULL:FOREIGN KEY
+);
+
+
+/*
+1. 요구사항
+   유치원을 하려고 하는데, 아이들이 체험학습 프로그램을 신청해야 합니다.
+   아이들 정보는 이름, 나이, 성별이 필요하고 학부모는 이름, 나이, 주소, 전화번호, 성별이 필요해요
+   체험학습은 체험학습 제목, 체험학습 내용, 이벤트 이미지 여러 장이 필요합니다.
+   아이들은 여러 번 체험학습에 등록할 수 있어요.
+    
+2. 개념 모델링
+	아이들		학부모		체험학습			체험학습 등록
+	번호			번호			번호				번호
+	이름			이름			제목				아이들 번호
+	나이			나이			내용				체험학습 번호
+	성별			주소			이벤트 이미지		
+	학부모 번호	전화번호
+				성별
+				
+3. 논리 모델링
+	아이들		학부모		체험학습			이벤트		체험학습 등록
+	-----------------------------------------------------------------
+	번호P			번호P			번호P				번호P			번호P
+	---------------------------------------------------------------
+	이름NN		이름NN		제목NN			제목NN		아이들 번호F
+	나이NN		나이NN		내용NN			내용			체험학습 번호F
+	성별NN		주소NN						이미지NN		이벤트 번호F
+	학부모 번호F	전화번호NN						체험학습 번호F
+				성별NN
+
+4. 물리 모델링
+
+PARENT								
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+PARENT_NAME:VARCHER2(500):NOT NULL	
+PARENT_AGE:NUMBER:NOT NULL	
+PARENT_ADRESS:VARCHER2(500):NOT NULL	
+PARENT_PHONE:NUMBER:NOT NULL	
+PARENT_GENDER:VARCHER2(500):NOT NULL	
+
+
+CHILDREN						
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+CHILDREN_NAME:VARCHER2(500):NOT NULL	
+CHILDREN_AGE:NUMBER:NOT NULL	
+CHILDREN_GENDER:VARCHER2(500):NOT NULL	
+PARENT_ID:NUMBER:NOT NULL:FOREIGN KEY	
+
+
+EXPERIENCE							
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+EXPERIENCE_TITLE:VARCHAR2(1000):NOT NULL		
+EXPERIENCE_CONTENT:VARCHAR2(1000):NOT NULL	
+EVENT_IMIGE:NOT NULL
+
+
+REGISTRATION						
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+CHILDREN_ID:NUMBER:NOT NULL:FOREIGN KEY
+EXPERIENCE_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+5. 구현
+*/
+
+CREATE TABLE TBL_PARENT(			
+	ID NUMBER CONSTRAINT PK_PARENT PRIMARY KEY,		
+	PARENT_NAME VARCHAR2(1000) NOT NULL,	
+	PARENT_AGE NUMBER(2) NOT NULL,	
+	PARENT_ADRESS VARCHAR2(1000) NOT NULL,	
+	PARENT_PHONE NUMBER NOT NULL,	
+	PARENT_GENDER VARCHAR2(1000) NOT NULL	
+);
+//나이
+
+CREATE TABLE TBL_CHILDREN(	
+	ID NUMBER CONSTRAINT PK_CHILDREN PRIMARY KEY,			
+	CHILDREN_NAME VARCHAR2(1000) NOT NULL,	
+	CHILDREN_AGE NUMBER(1) NOT NULL,	
+	CHILDREN_GENDER VARCHAR2(1000) NOT NULL,	
+	PARENT_ID NUMBER NOT NULL,
+	CONSTRAINT FK_CHILDREN_PARENT FOREIGN KEY(PARENT_ID)
+  	REFERENCES TBL_PARENT(ID)
+);
+
+//이름
+
+CREATE TABLE TBL_EXPERIENCE(		
+	ID NUMBER CONSTRAINT PK_EXPERIENCE PRIMARY KEY,			
+	EXPERIENCE_TITLE VARCHAR2(1000) NOT NULL,		
+	EXPERIENCE_CONTENT VARCHAR2(1000) NOT NULL,	
+	EVENT_PATH VARCHAR2(500) NOT NULL,
+	EVENT_SIZE NUMBER DEFAULT 0
+);
+
+
+CREATE TABLE TBL_EXPERIENCE_REGISTRATION(	
+	ID NUMBER CONSTRAINT PK_EXPERIENCE_REGISTRATION PRIMARY KEY,		
+	CHILDREN_ID NUMBER NOT NULL, 
+	EXPERIENCE_ID NUMBER NOT NULL,
+	CONSTRAINT FK_REGISTRATION_CHILDREN FOREIGN KEY(CHILDREN_ID)
+   	REFERENCES TBL_CHILDREN(ID),
+   	CONSTRAINT FK_REGISTRATION_EXPERIENCE FOREIGN KEY(EXPERIENCE_ID)
+  	REFERENCES TBL_EXPERIENCE(ID)
+);
+
+
+/*강사*/
+/*CREATE TABLE TBL_KINDERGARTEN(
+   ID NUMBER CONSTRAINT PK_KINDERGARTEN PRIMARY KEY,
+   KINDERGARTEN_NAME VARCHAR2(255),
+   KINDERGARTEN_ADDRESS VARCHAR2(255)
+);
+
+CREATE TABLE TBL_PARENT(
+   ID NUMBER CONSTRAINT PK_PARENT PRIMARY KEY,
+   PARENT_NAME VARCHAR2(255) NOT NULL,
+   PARENT_ADDRESS VARCHAR2(255) NOT NULL,
+   PARENT_PHONE VARCHAR2(255) NOT NULL,
+   PARENT_GENDER NUMBER DEFAULT 3
+);
+
+CREATE TABLE TBL_CHILD(
+   ID NUMBER CONSTRAINT PK_CHILD PRIMARY KEY,
+   CHILD_AGE NUMBER NOT NULL,
+   CHILD_GENDER NUMBER DEFAULT 3,
+   PARENT_ID NUMBER,
+   CONSTRAINT FK_CHILD_PARENT FOREIGN KEY(PARENT_ID)
+   REFERENCES TBL_PARENT(ID)
+);
+
+CREATE TABLE TBL_FIELD_TRIP(
+   ID NUMBER CONSTRAINT PK_FIELD_TRIP PRIMARY KEY,
+   FIELD_TRIP_TITLE VARCHAR2(255),
+   FIELD_TRIP_CONTENT VARCHAR2(255),
+   KINDERGARTEN_ID NUMBER,
+   CONSTRAINT FK_FIELD_TRIP_KINDERGARTEN FOREIGN KEY(KINDERGARTEN_ID)
+   REFERENCES TBL_KINDERGARTEN(ID)
+);
+
+CREATE TABLE TBL_FILE(
+   ID NUMBER CONSTRAINT PK_FILE PRIMARY KEY,
+   FILE_NAME VARCHAR2(255),
+   FILE_PATH VARCHAR2(255),
+   FILE_SIZE NUMBER
+);
+
+CREATE TABLE TBL_FIELD_TRIP_FILE(
+   ID NUMBER CONSTRAINT PK_FIELD_DRIP_FILE PRIMARY KEY,
+   FIELD_TRIP_ID NUMBER NOT NULL,
+   CONSTRAINT FK_FIELD_TRIP_FILE_FIELD_TRIP FOREIGN KEY(FIELD_TRIP_ID)
+   REFERENCES TBL_FIELD_TRIP(ID),
+   CONSTRAINT FK_FIELD_TRIP_FILE_FILE FOREIGN KEY(ID)
+   REFERENCES TBL_FILE(ID)
+);
+
+CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+   MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+   MEMBER_NAME VARCHAR2(255) NOT NULL,
+   MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+   MEMBER_EMAIL VARCHAR2(255),
+   MEMBER_BIRTH DATE,
+   KINDERGARTEN_ID NUMBER,
+   CONSTRAINT FK_MEMBER_KINDERGARTEN FOREIGN KEY(KINDERGARTEN_ID)
+   REFERENCES TBL_KINDERGARTEN(ID)
+);*/
+
+
+/*
+1. 요구사항
+   안녕하세요, 광고 회사를 운영하려고 준비중인 사업가입니다.
+   광고주는 기업이고 기업 정보는 이름, 주소, 대표번호, 기업종류(스타트업, 중소기업, 중견기업, 대기업)입니다. //이런 것에 휘둘리지 말라고 쓰신 것 //회원가입 입장으로.
+   광고는 제목, 내용이 있고 기업은 여러 광고를 신청할 수 있습니다.
+   기업이 광고를 선택할 때에는 카테고리로 선택하며, 대카테고리, 중카테고리, 소카테고리가 있습니다.
+
+2. 개념 모델링
+	
+	광고주		기업			스타트업		중소기업		중견기업		대기업
+	번호			번호			번호			번호			번호			번호
+				광고주번호		이름			이름			이름			이름
+							주소			주소			주소			주소
+							대표번호		대표번호		대표번호		대표번호		
+		1	:	1			기업번호		기업번호		기업번호		기업번호
+
+	
+	광고			대카테고리 		중카테고리			소카테고리			광고 신청
+	번호			번호				번호				번호				번호			
+	제목			이름				이름				이름				광고 번호			
+	내용							대카테고리			중카테고리			스타트업 번호
+	소카테고리번호													중소기업 번호
+																중견기업 번호
+																대기업 번호		
+3. 논리 모델링
+
+	광고주		기업			스타트업		중소기업		중견기업		대기업
+	-------------------------------------------------------------------------------------------
+	번호P			번호P			번호P			번호P			번호P			번호P
+	-------------------------------------------------------------------------------------------
+				광고주번호F	이름NN		이름NN		이름NN		이름NN
+							주소NN		주소NN		주소NN		주소NN
+							대표번호U,NN	대표번호U,NN	대표번호U,NN	대표번호U,NN		
+		1	:	1			기업번호F		기업번호F		기업번호F		기업번호F
+
+	
+	광고			대카테고리 		중카테고리			소카테고리			광고 신청
+	-------------------------------------------------------------------------------------------
+	번호P			번호P				번호P				번호P				번호P	
+	-------------------------------------------------------------------------------------------		
+	제목NN		이름NN			이름NN			이름NN			광고 번호NN,F			
+	내용NN						대카테고리F		중카테고리F		스타트업 번호NN,F
+	소카테고리번호F													중소기업 번호NN,F
+																중견기업 번호NN,F
+																대기업 번호NN,F	
+4. 물리 모델링
+
+ADVERTISER								
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+
+
+CORPORATION							
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+ADVERTISER_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+START_UP							
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+START_UP_NAME:VARCHAR2(1000):NOT NULL
+START_UP_ADRESS:VARCHAR2(1000):NOT NULL
+START_UP_REPRESENT_NUMBER:NUMBER:UNIQUE:NOT NULL
+CORPORATION_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+SMALL_MID_COMPANY						
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+SMALL_MEDIUM_COMPANY_NAME:VARCHAR2(1000):NOT NULL
+SMALL_MEDIUM_COMPANY_ADRESS:VARCHAR2(1000):NOT NULL
+SMALL_MEDIUM_COMPANY_REPRESENT_NUMBER:NUMBER:UNIQUE:NOT NULL
+CORPORATION_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+MID_COMPANY						
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+MID_COMPANY_NAME:VARCHAR2(1000):NOT NULL
+MID_COMPANY_ADRESS:VARCHAR2(1000):NOT NULL
+MID_COMPANY_REPRESENT_NUMBER:NUMBER:UNIQUE:NOT NULL
+CORPORATION_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+BIG_COMPANY						
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+BIG_COMPANY_NAME:VARCHAR2(1000):NOT NULL
+BIG_COMPANY_ADRESS:VARCHAR2(1000):NOT NULL
+BIG_COMPANY_REPRESENT_NUMBER:NUMBER:UNIQUE:NOT NULL
+CORPORATION_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+	광고			대카테고리 		중카테고리			소카테고리			광고 신청
+	-------------------------------------------------------------------------------------------
+	번호P			번호P				번호P				번호P				번호P	
+	-------------------------------------------------------------------------------------------		
+	제목NN		이름NN			이름NN			이름NN			광고 번호NN,F			
+	내용NN						대카테고리F		중카테고리F		스타트업 번호NN,F
+	소카테고리번호F													중소기업 번호NN,F
+																중견기업 번호NN,F
+																대기업 번호NN,F
+CATEGORY_A							
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------																
+CATEGORY_A_NAME VARCHAR2(1000)
+
+
+CATEGORY_B						
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------																
+CATEGORY_B_NAME VARCHAR2(1000)
+CATEGORY_A_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+CATEGORY_C				
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------																
+CATEGORY_C_NAME VARCHAR2(1000)
+CATEGORY_B_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+
+
+5. 구현
+*/
+
+/*강사*/
+/*CREATE TABLE TBL_COMPANY(
+   ID NUMBER CONSTRAINT PK_COMPANY PRIMARY KEY,
+   COMAPNY_NAME VARCHAR2(255) NOT NULL,
+   COMAPNY_ADDRESS VARCHAR2(255) NOT NULL,
+   COMAPNY_TEL VARCHAR2(255) NOT NULL,
+   COMAPNY_TYPE NUMBER
+);
+
+CREATE TABLE TBL_CATEGORY_A(
+   ID NUMBER CONSTRAINT PK_CATEGORY_A PRIMARY KEY,
+   CATEGORY_A_NAME VARCHAR2(255)
+);
+
+CREATE TABLE TBL_CATEGORY_B(
+   ID NUMBER CONSTRAINT PK_CATEGORY_B PRIMARY KEY,
+   CATEGORY_B_NAME VARCHAR2(255),
+   CATEGORY_A_ID NUMBER,
+   CONSTRAINT FK_CATEGORY_B_CATEGORY_A FOREIGN KEY(CATEGORY_A_ID)
+   REFERENCES TBL_CATEGORY_A(ID)
+);
+
+CREATE TABLE TBL_CATEGORY_C(
+   ID NUMBER CONSTRAINT PK_CATEGORY_C PRIMARY KEY,
+   CATEGORY_C_NAME VARCHAR2(255),
+   CATEGORY_B_ID NUMBER,
+   CONSTRAINT FK_CATEGORY_C_CATEGORY_B FOREIGN KEY(CATEGORY_B_ID)
+   REFERENCES TBL_CATEGORY_B(ID)
+);
+
+CREATE TABLE TBL_ADVERTISEMENT(
+   ID NUMBER CONSTRAINT PK_ADVERTISEMENT PRIMARY KEY,
+   ADVERTISEMENT_TITLE VARCHAR2(255) NOT NULL,
+   ADVERTISEMENT_CONTENT VARCHAR2(255) NOT NULL,
+   COMPANY_ID NUMBER,
+   CONSTRAINT FK_ADVERTISEMENT_COMPANY FOREIGN KEY(COMPANY_ID)
+   REFERENCES TBL_COMPANY(ID)
+);
+
+ALTER TABLE TBL_ADVERTISEMENT ADD (CATEGORY_C_ID NUMBER);
+ALTER TABLE TBL_ADVERTISEMENT ADD 
+CONSTRAINT FK_ADVERTISEMENT_CATEGORY_C FOREIGN KEY(CATEGORY_C_ID)
+REFERENCES TBL_CATEGORY_C(ID);
+
+CREATE TABLE TBL_APPLY(
+   ID NUMBER CONSTRAINT PK_APPLY PRIMARY KEY,
+   COMPANY_ID NUMBER NOT NULL, 
+   ADVERTISEMENT_ID NUMBER NOT NULL,
+   CONSTRAINT FK_APPLY_COMPANY FOREIGN KEY(COMPANY_ID)
+   REFERENCES TBL_COMPANY(ID),
+   CONSTRAINT FK_APPLY_ADVERTISEMENT FOREIGN KEY(ADVERTISEMENT_ID)
+   REFERENCES TBL_ADVERTISEMENT(ID)
+);*/
+
+
+
+/*
+1. 요구사항
+   음료수 판매 업체입니다. 음료수마다 당첨번호가 있습니다. 
+   음료수의 당첨번호는 1개이고 당첨자의 정보를 알아야 상품을 배송할 수 있습니다.
+   당첨 번호마다 당첨 상품이 있고, 당첨 상품이 배송 중인지 배송 완료인지 구분해야 합니다.
+
+2. 개념 모델링
+	
+	음료수		당첨자 정보		당첨번호		당첨 상품		당첨 상품 배송
+	번호			번호				번호			번호			번호
+	음료수명		이름NN						상품명U,NN	당첨자 번호F,NN	
+	당첨번호FD=1	폰번호NN						당첨번호FD=1	당첨 상품 번호F,NN
+				주소NN										배송 상태D=3	
+				상세주소NN
+				이메일
+				아이디U,NN
+				패스워드NN
+
+3. 논리 모델링
+
+	음료수		회원 정보			당첨번호		당첨 상품		주문				배송
+	-------------------------------------------------------------------------------
+	번호P			번호P				번호P			번호P			번호				번호
+	-------------------------------------------------------------------------------
+	음료수명U,NN	이름NN						상품명U,NN	날짜NN			주문번호FK,NN
+	당첨상품FD=0	폰번호NN						당첨번호F		회원번호FK,NN		배송상태D=3
+				주소NN						(슈퍼키)		음료수번호FK,NN
+				상세주소NN
+				이메일
+				아이디U,NN
+				패스워드NN
+				
+4. 물리 모델링
+
+ MEMBER									
+ -----------------------------------
+ ID:NUMBER:PRIMARY KEY		
+ ------------------------------------
+ MEMBER_ID:UNIQUE:NOT NULL				
+ MEMBER_PW:VARCHAR2(1000):NOT NULL		
+ MEMBER_NAME:VARCHAR2(1000):NOT NULL	
+ MEMBER_PHONE:NUMBER:NOT NULL	
+ MEMBER_ADRESS:VARCHAR2(1000):NOT NULL
+ MEMBER_ADRESS_DETAIL:VARCHAR2(1000):NOT NULL
+ MEMBER_EMAIL:VARCHAR2(1000)
+
+WINNING_NUMBER
+--------------------------------------
+ID:NUMBER:PRIMARY KEY	
+-----------------------------------
+
+WINNING_PRIZE
+--------------------------------------
+ID:NUMBER:PRIMARY KEY	
+-----------------------------------
+PRIZE_NAME:VARCHAR2(1000):UNIQUE:NOT NULL
+WINNING_NUMBER_ID:NUMBER:FOREIGN KEY(슈퍼키)
+
+
+JUICE							
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+JUICE_NAME:VARCHAR2(1000):UNIQUE:NOT NULL
+WINNING_PRIZE:NUMBER:FOREIGN KEY:DEFAULT 0
+
+
+WINNING_PRIZE_DELIEVERY
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+MEMBER_ID:NUMBER:FOREIGN KEY:NOT NULL
+JUICE_ID:NUMBER:FOREIGN KEY:NOT NULL
+DELIEVERY_STATE:VARCHAR2(1000):DEFAULT 3
+
+5. 구현
+*/
+
+ CREATE TABLE TBL_MEMBER(					
+ 	ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,		
+ 	MEMBER_ID:UNIQUE:NOT NULL				
+ 	MEMBER_PW:VARCHAR2(1000):NOT NULL		
+ 	MEMBER_NAME:VARCHAR2(1000):NOT NULL	
+ 	MEMBER_PHONE:NUMBER:NOT NULL	
+ 	MEMBER_ADRESS:VARCHAR2(1000):NOT NULL
+ 	MEMBER_ADRESS_DETAIL:VARCHAR2(1000):NOT NULL
+ 	MEMBER_EMAIL:VARCHAR2(1000)
+ );
+
+WINNING_NUMBER
+ID:NUMBER:PRIMARY KEY	
+
+WINNING_PRIZE
+ID:NUMBER:PRIMARY KEY	
+PRIZE_NAME:VARCHAR2(1000):UNIQUE:NOT NULL
+WINNING_NUMBER_ID:NUMBER:FOREIGN KEY(슈퍼키)
+
+
+JUICE							
+ID:NUMBER:PRIMARY KEY		
+JUICE_NAME:VARCHAR2(1000):UNIQUE:NOT NULL
+WINNING_PRIZE:NUMBER:FOREIGN KEY:DEFAULT 0
+
+
+WINNING_PRIZE_DELIEVERY
+ID:NUMBER:PRIMARY KEY		
+MEMBER_ID:NUMBER:FOREIGN KEY:NOT NULL
+JUICE_ID:NUMBER:FOREIGN KEY:NOT NULL
+DELIEVERY_STATE:VARCHAR2(1000):DEFAULT 3
+
+
+/*NUMBER? 정수로 하면 0이 사라진다. 1부처 시작한다.??*/
+
+
+
+/*강사*/
+/*CREATE TABLE TBL_MEMBER(
+   ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,
+   MEMBER_ID VARCHAR2(255) CONSTRAINT UK_MEMBER UNIQUE NOT NULL,
+   MEMBER_PASSWORD VARCHAR2(255) NOT NULL,
+   MEMBER_NAME VARCHAR2(255) NOT NULL,
+   MEMBER_ADDRESS VARCHAR2(255) NOT NULL,
+   MEMBER_EMAIL VARCHAR2(255),
+   MEMBER_BIRTH DATE
+);
+
+
+/*1. 요구사항
+   음료수 판매 업체입니다. 음료수마다 당첨번호가 있습니다. 
+   음료수의 당첨번호는 1개이고 당첨자의 정보를 알아야 상품을 배송할 수 있습니다.
+   당첨 번호마다 당첨 상품이 있고, 당첨 상품이 배송 중인지 배송 완료인지 구분해야 합니다.
+   
+회원				음료수		
+번호				번호
+아아디			이름
+비밀번호
+이름
+주소
+이메일
+생일
+
+
+
+CREATE TABLE TBL_SOFT_DRINK(
+   ID NUMBER CONSTRAINT PK_SOFT_DRINK PRIMARY KEY,
+   SOFT_DRINK_NAME VARCHAR2(255)
+);
+
+CREATE TABLE TBL_PRODUCT(
+   ID NUMBER CONSTRAINT PK_PRODUCT PRIMARY KEY,
+   PRODUCT_NAME VARCHAR2(255) NOT NULL,
+   PRODUCT_PRICE NUMBER DEFAULT 0,
+   PRODUCT_STOCK NUMBER DEFAULT 0
+);
+
+CREATE TABLE TBL_LOTTERY(
+   ID NUMBER CONSTRAINT PK_LOTTERY PRIMARY KEY,
+   LOTTERY_NUMBER VARCHAR2(255) NOT NULL,
+   PRODUCT_ID NUMBER,
+   CONSTRAINT FK_LOTTERY_PRODUCT FOREIGN KEY(PRODUCT_ID)
+   REFERENCES TBL_PRODUCT(ID)
+);
+
+CREATE TABLE TBL_CIRCULATION(
+   ID NUMBER CONSTRAINT PK_CIRCULATION PRIMARY KEY,
+   SOFT_DRINK_ID NUMBER,
+   LOTTERY_ID NUMBER,
+   CONSTRAINT FK_CIRCULATION_SOFT_DRINK FOREIGN KEY(SOFT_DRINK_ID)
+   REFERENCES TBL_SOFT_DRINK(ID),
+   CONSTRAINT FK_CIRCULATION_LOTTERY FOREIGN KEY(LOTTERY_ID)
+   REFERENCES TBL_LOTTERY(ID)
+);
+
+CREATE TABLE TBL_DILIVERY(
+   ID NUMBER CONSTRAINT PK_DILIVERY PRIMARY KEY,
+   MEMBER_ID NUMBER NOT NULL,
+   PRODUCT_ID NUMBER NOT NULL,
+   STATUS NUMBER DEFAULT 0,
+   CONSTRAINT FK_DILIVERY_MEMBER FOREIGN KEY(MEMBER_ID)
+   REFERENCES TBL_MEMBER(ID),
+   CONSTRAINT FK_DILIVERY_PRODUCT FOREIGN KEY(PRODUCT_ID)
+   REFERENCES TBL_PRODUCT(ID)
+);*/
+
+
+/*
+1. 요구사항
+   이커머스 창업 준비중입니다. 기업과 사용자 간 거래를 위해 기업의 정보와 사용자 정보가 필요합니다.
+   기업의 정보는 기업 이름, 주소, 대표번호가 있고
+   사용자 정보는 이름, 주소, 전화번호가 있습니다. 결제 시 사용자 정보와 기업의 정보, 결제한 카드의 정보 모두 필요하며,
+   상품의 정보도 필요합니다. 상품의 정보는 이름, 가격, 재고입니다.
+   사용자는 등록한 카드의 정보를 저장할 수 있으며, 카드의 정보는 카드번호, 카드사, 회원 정보가 필요합니다.
+
+2. 개념 모델링
+	이커머스 창업 준비중 
+	기업과 사용자 간 거래를 위해 /기업의 정보/와 /사용자 정보/가 필요한 상황
+	
+	기업			사용자(회원)		결제				상품			사용자 카드 	
+	번호			번호				번호				번호			번호			
+	이름			이름				사용자 번호		이름			카드사
+	주소			주소				기업 번호			가격			회원 번호
+	대표번호		전화번호			사용자 카드 번호	재고
+								상품 번호
+
+사용자는 등록한 카드의 정보를 저장할 수 있으며????????????????????????????????????
+
+3. 논리 모델링
+
+	기업			사용자(회원)		결제				상품			사용자 카드 
+	--------------------------------------------------------------------------	
+	번호P			번호P				번호P				번호P			번호P			
+	--------------------------------------------------------------------------
+	이름NN		이름NN			사용자 번호F		이름NN		카드번호U,NN
+	주소			주소				기업 번호F			가격D=0		카드사U,NN
+	대표번호		전화번호			사용자 카드 번호F	재고D=0		회원 번호F
+								상품 번호F
+
+4. 물리 모델링
+
+CORPORATION
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+CORPORATION_NAME:ARCHAR2(1000):NOT NULL
+CORPORATION_ADRESS:ARCHAR2(1000):NOT NULL
+CORPORATION_TEL:VARCHAR2(1000):NOT NULL
+
+MEMBER
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+MEMBER_NAME:ARCHAR2(1000):NOT NULL
+MEMBER_ADRESS:ARCHAR2(1000):NOT NULL
+MEMBER_PHONE:VARCHAR2(1000):NOT NULL
+
+PRODUCT
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+PRODUCT_NAME:ARCHAR2(1000):NOT NULL
+PRODUCT_PRICE:NUMBER:DEFAULT 0
+PRODUCT_STOCK:NUMBER:DEFAULT 0
+
+CARD
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+CARD_NUMBER:VARCHAR2(1000):UNIQUE:NOT NULL
+CARD_COMPANY:VARCHAR2(1000):UNIQUE:NOT NULL
+MEMBER_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+PAYMENT
+-----------------------------------
+ID:NUMBER:PRIMARY KEY		
+------------------------------------
+MEMBER_ID:NUMBER:NOT NULL:FOREIGN KEY
+CORPORATION_ID:NUMBER:NOT NULL:FOREIGN KEY
+PRODUCT_ID:NUMBER:NOT NULL:FOREIGN KEY
+CARD_ID:NUMBER:NOT NULL:FOREIGN KEY
+
+
+
+5. 구현
+*/
+
+CREATE TABLE TBL_CORPORATION(
+	ID NUMBER CONSTRAINT PK_CORPORATION PRIMARY KEY,	
+	CORPORATION_NAME VARCHAR2(1000) NOT NULL,
+	CORPORATION_ADRESS VARCHAR2(1000) NOT NULL,
+	CORPORATION_TEL VARCHAR2(1000) NOT NULL
+);
+
+CREATE TABLE TBL_MEMBER(
+	ID NUMBER CONSTRAINT PK_MEMBER PRIMARY KEY,			
+	MEMBER_NAME VARCHAR2(1000) NOT NULL,
+	MEMBER_ADRESS VARCHAR2(1000) NOT NULL,
+	MEMBER_PHONE VARCHAR2(1000) NOT NULL
+);
+
+CREATE TABLE TBL_PRODUCT(
+	ID NUMBER CONSTRAINT PK_PRODUCT PRIMARY KEY,				
+	PRODUCT_NAME VARCHAR2(1000) NOT NULL,
+	PRODUCT_PRICE NUMBER DEFAULT 0,
+	PRODUCT_STOCK NUMBER DEFAULT 0
+);
+
+CREATE TABLE TBL_CARD(
+	ID NUMBER CONSTRAINT PK_CARD PRIMARY KEY,				
+	CARD_NUMBER VARCHAR2(1000) CONSTRAINT UK_CARD_NUMBER UNIQUE NOT NULL,
+	CARD_COMPANY VARCHAR2(1000) CONSTRAINT UK_CARD_COMPANY UNIQUE NOT NULL,
+	MEMBER_ID NUMBER NOT NULL,
+	CONSTRAINT FK_CARD_MEMBER FOREIGN KEY(MEMBER_ID)
+  	REFERENCES TBL_MEMBER(ID)
+);
+
+CREATE TABLE TBL_PAYMENT(
+	ID NUMBER CONSTRAINT PK_PAYMENT PRIMARY KEY,	
+	MEMBER_ID NUMBER NOT NULL,
+	CORPORATION_ID NUMBER NOT NULL,
+	PRODUCT_ID NUMBER NOT NULL,
+	CARD_ID NUMBER NOT NULL,
+	CONSTRAINT FK_PAYMENT_MEMBER FOREIGN KEY(MEMBER_ID)
+   	REFERENCES TBL_MEMBER(ID),
+	CONSTRAINT FK_PAYMENT_CORPORATION FOREIGN KEY(CORPORATION_ID)
+   	REFERENCES TBL_CORPORATION(ID),
+	CONSTRAINT FK_PAYMENT_PRODUCT FOREIGN KEY(PRODUCT_ID)
+   	REFERENCES TBL_PRODUCT(ID),
+	CONSTRAINT FK_PAYMENT_CARD FOREIGN KEY(CARD_ID)
+   	REFERENCES TBL_CARD(ID)
+);
+
+
+/*
+   회원번호      이름   	부서   	프로젝트코드   급여   	부서별 명수
+   22080101    한동석 	개발팀   	ABC0001    	3000   	4
+   22080101    한동석   	개발팀   	DEF1112     2000   	4
+   22080101    한동석   	개발팀   	CBA9474     4000   	4
+   22080104    홍길동   	기획팀   	EFG0881     5000   	2
+   22081106    이순신   	디자인팀 	GHI9991     6000   	3
+*/
+
+/*
+ 2차 정규화
+ 
+  회원 테이플
+  회원 번호		이름			부서		부서별 명수
+  22080101  	한동석		개발팀	4
+  22080104		홍길동		기획팀	2
+  22081106		이순신		디자인팀	3
+  
+  프로젝트 테이블
+  프로젝트코드			급여
+  ABC0001			3000
+  DEF1112			2000
+  CBA9474			4000
+  EFG0881			5000
+  GHI9991			6000
+  
+  
+ 번호 	이름			특징			색깔		꽃말		과
+ 3 		해바라기		씨가 많음		하얀색	행운		국화
+ 3 		해바라기		씨가 많음		노란색	바라기	국화
+ 3 		해바라기		씨가 많음		분홍색	하하		국화
+ 4		장미			가시가 많음	빨간색	사랑		장미
+ 5		민들레		씨가 날라감	노란색	순결		민들레
+ 
+ 꽃
+ 번호		이름		색상		꽃말
+ 3
+ 
+        
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
