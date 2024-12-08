@@ -1,6 +1,8 @@
 # 코리아 IT 아카데미 국비과정
 
-<p style="text-align: right;">이 문장은 오른쪽으로 정렬됩니다.</p>
+<div style="text-align: right;">
+이 문장은 오른쪽 정렬된 텍스트입니다.
+</div>
 
 ## DBMS ⭐
 
