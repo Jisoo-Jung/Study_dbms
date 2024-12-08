@@ -595,8 +595,12 @@ CREATE VIEW [뷰 이름] AS (select 쿼리문);
 
 <div style="text-align: right"> 
 
-([back to top](#코리아-it-아카데미-국비과정))
-
+<span> 
+	
+ ([back to top](#코리아-it-아카데미-국비과정))
+ 
+<span> 
+	
 </div>
 
 -----------------------------------------------------------
