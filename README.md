@@ -610,3 +610,7 @@ CREATE VIEW [뷰 이름] AS (select 쿼리문);
 > 개행은 개행할 위치에서 스페이스 두 번 입력.  
 > blockquote-reverse
 {: .blockquote-reverse}
+
+
+원하는 텍스트
+{: style="text-align: pattern;"}
