@@ -1,11 +1,5 @@
 # 코리아 IT 아카데미 국비과정
 
-<div style="text-align: right;">
-	
-이 문장은 오른쪽 정렬된 텍스트입니다.
-
-</div>
-
 ## DBMS ⭐
 
 **DB(Database)**
@@ -599,24 +593,6 @@ VIEW 문법
 CREATE VIEW [뷰 이름] AS (select 쿼리문);
 ```
 
-<div style="text-align: right"> 
-
-<span style="text-align: right"> 
-	
- ([back to top](#코리아-it-아카데미-국비과정))
- 
-<span> 
-	
-</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;([back to top](#코리아-it-아카데미-국비과정))
 
 -----------------------------------------------------------
-
-> blockquote-reverse  
-> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante.  
-> 개행은 개행할 위치에서 스페이스 두 번 입력.  
-> blockquote-reverse
-{: .blockquote-reverse}
-
-
-원하는 텍스트
-{: style="text-align: pattern;"}
